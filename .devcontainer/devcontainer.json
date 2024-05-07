@@ -1,0 +1,82 @@
+{
+    "name": "wav2lip",
+    "image": "pytorch22_cuda12:latest",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-toolsai.jupyter",
+                "ms-toolsai.jupyter-renderers",
+                "ms-toolsai.jupyter-keymap",
+                "Github.copilot",
+                "zhuangtongfa.Material-theme",
+                "ms-azuretools.vscode-docker",
+                "ms-vscode-remote.remote-containers",
+                "christian-kohler.path-intellisense",
+                "esbenp.prettier-vscode",
+                "mhutchie.git-graph",
+                "njqdev.vscode-python-typehint",
+                "mechatroner.rainbow-csv",
+                "redhat.vscode-yaml",
+                "ZainChen.json",
+                "ms-python.isort",
+                "tamasfe.even-better-toml",
+                "donjayamanne.python-environment-manager"
+            ],
+            "settings": {
+                "editor.formatOnSave": true,
+                "[python]": {
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": "explicit"
+                    },
+                    "editor.tabSize": 4
+                },
+                "files.eol": "\n",
+                "files.insertFinalNewline": true,
+                "files.trimFinalNewlines": true,
+                "files.trimTrailingWhitespace": true,
+                "isort.args": [
+                    "--profile",
+                    "black"
+                ],
+                "jupyter.runStartupCommands": [
+                    "%load_ext autoreload",
+                    "%autoreload 2"
+                ],
+                "notebook.output.textLineLimit": 300,
+                "diffEditor.ignoreTrimWhitespace": false
+            }
+        }
+    },
+    "containerEnv": {
+        "USER": "researcher",
+        "SSH_AUTH_SOCK": "/u/home/.ssh/ssh-agent"
+    },
+    "initializeCommand": "ls",
+    "remoteUser": "researcher",
+    "runArgs": [
+        "--shm-size=40G",
+        "--gpus",
+        "all",
+        "--rm",
+        "-v",
+        "${localEnv:SSH_AUTH_SOCK}:/u/home/.ssh/ssh-agent",
+        "-e",
+        "SSH_AUTH_SOCK=/u/home/.ssh/ssh-agent",
+        "-v",
+        "/data:/data",
+        "-v",
+        "/home/${localEnv:USER}/.config:/u/home/.config",
+        "-v",
+        "/home/${localEnv:USER}/code:/u/home/code",
+        "-v",
+        "/home/${localEnv:USER}/dump:/u/home/dump",
+        "-v",
+        "/mnt/datasets:/mnt/datasets",
+        "-v",
+        "/mnt/workspace:/mnt/workspace",
+        "-v",
+        "/mnt/datasets2:/mnt/datasets2"
+    ]
+}

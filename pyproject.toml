@@ -1,0 +1,46 @@
+[project]
+name = "wav2lip"
+version = "0.0.0"
+description = "Tavus Wav2lip version"
+readme = "README.md"
+requires-python = ">=3.8"
+
+# This is either text indicating the license for the distribution, or a file
+# that contains the license
+# https://packaging.python.org/en/latest/specifications/core-metadata/#license
+# license = { file = "LICENSE.txt" }
+# This should be your name or the name of the organization who originally
+# authored the project, and a valid email address corresponding to the name
+# listed.
+authors = [{ name = "Sushobhan Ghosh", email = "sushobhan@tavus.io" }]
+
+# This should be your name or the names of the organization who currently
+# maintains the project, and a valid email address corresponding to the name
+# listed.
+maintainers = [{ name = "Sushobhan Ghosh", email = "sushobhan@tavus.io" }]
+
+dependencies = [ # Optional
+    "torch>=2.0.0",
+    "wandb",
+    "librosa",
+    "opencv-contrib-python",
+    "numba"
+]
+
+# The following would provide a command line executable called `sample`
+# which executes the function `main` from this package when invoked.
+[project.scripts] # Optional
+sample = "sample:main"
+
+[build-system]
+# These are the assumed default build requirements from pip:
+# https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
+requires = ["setuptools>=43.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["wav2lip"]
+
+[tool.ruff]
+line-length = 80
+select = ["E", "F"]

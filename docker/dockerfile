@@ -1,0 +1,148 @@
+FROM pytorch/pytorch:2.1.2-cuda12.1-cudnn8-devel
+
+ENV LIBRARY_PATH /usr/local/cuda/lib64/stubs${LIBRARY_PATH:+:${LIBRARY_PATH}}
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+ENV TZ=Etc/UTC
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get upgrade -y
+
+RUN apt-get install openssh-server openssh-client -y
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    autoconf \
+    automake \
+    build-essential \
+    bzip2  \
+    ca-certificates \
+    cmake \
+    curl \
+    gfortran \
+    git \
+    libavcodec-dev \
+    libavfilter-dev \
+    libavformat-dev \
+    libavutil-dev \
+    libgl1 \
+    libswresample-dev \
+    libtool \
+    libx264-dev \
+    libx265-dev \
+    libvpx-dev \
+    libfdk-aac-dev \
+    libopus-dev \
+    locales \
+    nasm \
+    ninja-build \
+    pkg-config \
+    sox \
+    subversion \
+    tmux \
+    unzip \
+    wget \
+    zlib1g-dev \
+    zsh &&\
+    apt-get clean &&\
+    apt-get autoclean &&\
+    apt-get autoremove &&\
+    rm -rf /var/lib/apt/lists/*
+
+ENV PATH=$PATH:/u/home/.local/bin
+
+####################################
+# Set up locale to avoid zsh errors
+####################################
+
+RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+    && locale-gen --purge --lang en_US \
+    && locale-gen
+
+RUN ldconfig
+
+################################################
+# Set up the environment variables
+# Used in installing following libs as well
+################################################
+
+ENV TMP_PATH=/u/home/dump \
+    LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH" \
+    USER=researcher \
+    USER_GROUP=research \
+    USER_ID=1000 \
+    USER_GID=1000 \
+    LANG=en_US.utf8
+
+####################################
+# Install miniconda
+# Give writing permissions to all users to the miniconda folder.
+####################################
+
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /home/miniconda.sh &&\
+    chmod +x /home/miniconda.sh &&\
+    bash /home/miniconda.sh -b -p /home/miniconda3 &&\
+    rm /home/miniconda.sh &&\
+    chmod -R o+wx /home/miniconda3
+
+ENV PATH=/u/home/.local/bin:/home/miniconda3/bin:$PATH
+
+#######################################
+# Adding a user which will be mapped to
+# real user running the docker
+#######################################
+RUN mkdir -p -m 777 /u/home && \
+    groupadd --gid "${USER_GID}" "${USER_GROUP}" && \
+    useradd \
+    --uid ${USER_ID} \
+    --gid ${USER_GID} \
+    --home-dir /u/home \
+    --shell /usr/bin/zsh \
+    ${USER} && \
+    usermod -a -G ${USER_GROUP} ${USER}
+
+####################################
+# Set up oh my zsh
+####################################
+WORKDIR /u/home
+RUN mkdir /u/home/.ssh &&\
+    chmod 700 /u/home/.ssh
+
+COPY zshrc /u/home/.zshrc
+COPY tmux.conf /u/home/.tmux.conf
+COPY entry_script.sh /u/home/entry_script.sh
+COPY conda_env.yml /u/home/conda_env.yml
+COPY requirements.pip.txt /u/home/requirements.pip.txt
+
+RUN chown -R ${USER_ID}:${USER_GID} /u/home
+
+USER ${USER_ID}
+
+RUN git clone https://github.com/robbyrussell/oh-my-zsh.git /u/home/.oh-my-zsh &&\
+    sed -i 's/❯/Docker❯/g' /u/home/.oh-my-zsh/themes/refined.zsh-theme
+
+# Path to your oh-my-zsh installation.
+ENV ZSH=/u/home/.oh-my-zsh \
+    PATH_TO_COPY=${PATH}
+
+ENV HOME=/u/home
+ENV SHELL="/usr/bin/zsh"
+
+####################################
+# setting python environment
+####################################
+# SHELL ["/bin/bash", "--login", "-c"]
+RUN /home/miniconda3/bin/conda env create -f /u/home/conda_env.yml
+# RUN conda init bash
+
+####################################
+# pip install requirements
+####################################
+
+SHELL ["conda", "run", "-n", "pytorch", "/bin/bash", "-c"]
+# RUN conda /home/miniconda3/bin/activate pytorch
+RUN conda install -y -c fvcore -c iopath -c conda-forge fvcore iopath
+RUN pip install --user -r requirements.pip.txt
+# ENV FORCE_CUDA="1"
+# RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+ENTRYPOINT ["/bin/bash", "/u/home/entry_script.sh"]
