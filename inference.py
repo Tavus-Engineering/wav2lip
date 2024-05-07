@@ -9,7 +9,7 @@ from models import Wav2Lip
 import platform
 
 '''
-python3 inference.py \
+python3 ~/code/wav2lip/inference.py \
 --checkpoint_path ~/code/wav2lip/checkpoints/wav2lip.pth \
 --face /mnt/datasets2/arcads/processed_videos/1311_valid.mp4 \
 --audio /mnt/datasets2/arcads/processed_audio/1311_valid.mp3
